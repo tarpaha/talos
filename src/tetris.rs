@@ -27,7 +27,7 @@ impl TetrominoVariant {
             }
             y += 1;
         }
-        TetrominoVariant { width, height, blocks: blocks }
+        TetrominoVariant { width, height, blocks }
     }
 }
 
