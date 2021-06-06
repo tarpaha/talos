@@ -73,4 +73,9 @@ fn main() {
             }
         }
     }
+    
+    let collection = tetrominoes.collection_from_string("I1O2");
+    for tetromino in collection {
+        println!("{}", tetromino);
+    }
 }

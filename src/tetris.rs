@@ -1,4 +1,5 @@
 ﻿use std::fmt;
+use std::str;
 
 pub struct Block {
     pub x: u8,
@@ -213,5 +214,18 @@ impl Tetrominoes {
     
     pub fn get(&self, name: &str) -> Option<&Tetromino> {
         self.tetrominoes.iter().find(|t| t.name == name)
+    }
+    
+    pub fn collection_from_string(&self, s: &str) -> Vec<&Tetromino> {
+        let mut tetrominoes = vec![];
+        let chars: Vec<char> = s.chars().collect();
+        for i in (0..chars.len()).step_by(2) {
+            let tetromino = self.get(&chars[i].to_string()).unwrap();
+            let count = char::to_digit(chars[i +1], 10).unwrap();
+            for _ in 0..count {
+                tetrominoes.push(tetromino);
+            }
+        }
+        tetrominoes
     }
 }
