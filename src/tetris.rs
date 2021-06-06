@@ -6,8 +6,8 @@ pub struct Block {
 }
 
 pub struct TetrominoVariant {
-    width: u8,
-    height: u8,
+    pub width: u8,
+    pub height: u8,
     pub blocks: Vec<Block>
 }
 

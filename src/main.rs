@@ -46,9 +46,16 @@ impl fmt::Display for Field {
 fn main() {
     let tetrominoes = tetris::Tetrominoes::new();
     let mut field = Field::new(4, 4);
-    field.add(&tetrominoes.get("L").unwrap().variants[0], 0, 0);
-    field.add(&tetrominoes.get("O").unwrap().variants[0], 2, 0);
-    println!("{}", field);
-    field.remove(&tetrominoes.get("O").unwrap().variants[0], 2, 0);
-    println!("{}", field);
+
+    let tetramino = &tetrominoes.get("J").unwrap();
+    for variant in &tetramino.variants
+    {
+        for y in 0..(field.height - variant.height + 1) {
+            for x in 0..(field.width - variant.width + 1) {
+                field.add(variant, x, y);
+                println!("{}", field);
+                field.remove(variant, x, y);
+            }
+        }
+    }
 }
