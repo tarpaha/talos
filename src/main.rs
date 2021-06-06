@@ -60,8 +60,8 @@ fn main() {
     field.add(&tetrominoes.get("O").unwrap().variants[0], 0, 0);
     field.add(&tetrominoes.get("O").unwrap().variants[0], 2, 0);
 
-    let tetramino = &tetrominoes.get("J").unwrap();
-    for variant in &tetramino.variants
+    let tetromino = &tetrominoes.get("J").unwrap();
+    for variant in &tetromino.variants
     {
         for y in 0..(field.height - variant.height + 1) {
             for x in 0..(field.width - variant.width + 1) {
