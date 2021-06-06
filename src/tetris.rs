@@ -1,28 +1,33 @@
 ﻿use std::fmt;
 
-struct TetrominoVariant {
+pub struct Block {
+    pub x: u8,
+    pub y: u8
+}
+
+pub struct TetrominoVariant {
     width: u8,
     height: u8,
-    cells: Vec<(u8, u8)>
+    pub blocks: Vec<Block>
 }
 
 impl TetrominoVariant {
     fn from_string_lines(lines: Vec<&str>) -> Self {
         let width = lines[0].len() as u8;
         let height = lines.len() as u8;
-        let mut cells = vec![];
+        let mut blocks = vec![];
         let mut y = 0;
         for line in lines {
             let mut x = 0;
             for ch in line.chars() {
                 if ch == '#' {
-                    cells.push((x, y));
+                    blocks.push(Block { x, y });
                 }
                 x += 1;
             }
             y += 1;
         }
-        TetrominoVariant { width, height, cells }
+        TetrominoVariant { width, height, blocks: blocks }
     }
 }
 
@@ -31,7 +36,7 @@ impl fmt::Display for TetrominoVariant {
         writeln!(f, "({}, {})", self.width, self.height)?;
         for y in 0..self.height {
             for x in 0..self.width {
-                let ch = if self.cells.contains(&(x, y)) { '#' } else { ' ' };
+                let ch = if self.blocks.iter().any(|block| block.x == x && block.y == y) { '#' } else { ' ' };
                 write!(f, "{}", ch)?;
             }
             writeln!(f)?;
@@ -44,17 +49,19 @@ impl fmt::Display for TetrominoVariant {
 //////////////////////////////////////////////////////////////////////////////
 
 pub struct Tetromino {
-    variants: Vec<TetrominoVariant>
+    name: &'static str,
+    pub variants: Vec<TetrominoVariant>
 }
 
 impl Tetromino {
-    fn from_variants(variants: Vec<TetrominoVariant>) -> Self {
-        Tetromino { variants }
+    fn from_variants(name: &'static str, variants: Vec<TetrominoVariant>) -> Self {
+        Tetromino { name, variants }
     }
 }
 
 impl fmt::Display for Tetromino {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "\"{}\"", self.name);
         for variant in &self.variants {
             write!(f, "{}", variant)?;
         }
@@ -67,7 +74,7 @@ impl fmt::Display for Tetromino {
 
 #[allow(non_snake_case)]
 fn I() -> Tetromino {
-    Tetromino::from_variants(vec! [
+    Tetromino::from_variants("I", vec! [
         TetrominoVariant::from_string_lines(vec![
             "#",
             "#",
@@ -82,7 +89,7 @@ fn I() -> Tetromino {
 
 #[allow(non_snake_case)]
 fn J() -> Tetromino {
-    Tetromino::from_variants(vec! [
+    Tetromino::from_variants("J", vec! [
         TetrominoVariant::from_string_lines(vec![
             " #",
             " #",
@@ -106,7 +113,7 @@ fn J() -> Tetromino {
 
 #[allow(non_snake_case)]
 fn L() -> Tetromino {
-    Tetromino::from_variants(vec! [
+    Tetromino::from_variants("L", vec! [
         TetrominoVariant::from_string_lines(vec![
             "# ",
             "# ",
@@ -130,7 +137,7 @@ fn L() -> Tetromino {
 
 #[allow(non_snake_case)]
 fn O() -> Tetromino {
-    Tetromino::from_variants(vec! [
+    Tetromino::from_variants("O", vec! [
         TetrominoVariant::from_string_lines(vec![
             "##",
             "##"
@@ -140,7 +147,7 @@ fn O() -> Tetromino {
 
 #[allow(non_snake_case)]
 fn S() -> Tetromino {
-    Tetromino::from_variants(vec! [
+    Tetromino::from_variants("S", vec! [
         TetrominoVariant::from_string_lines(vec![
             " ##",
             "## "
@@ -155,7 +162,7 @@ fn S() -> Tetromino {
 
 #[allow(non_snake_case)]
 fn T() -> Tetromino {
-    Tetromino::from_variants(vec! [
+    Tetromino::from_variants("T", vec! [
         TetrominoVariant::from_string_lines(vec![
             " # ",
             "###"
@@ -179,7 +186,7 @@ fn T() -> Tetromino {
 
 #[allow(non_snake_case)]
 fn Z() -> Tetromino {
-    Tetromino::from_variants(vec! [
+    Tetromino::from_variants("Z", vec! [
         TetrominoVariant::from_string_lines(vec![
             "## ",
             " ##"
@@ -192,6 +199,19 @@ fn Z() -> Tetromino {
     ])
 }
 
-pub fn tetrominoes() -> Vec<Tetromino> {
-    vec![I(), J(), L(), O(), S(), T(), Z()]
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+pub struct Tetrominoes {
+    tetrominoes: Vec<Tetromino>
+}
+
+impl Tetrominoes {
+    pub fn new() -> Self {
+        Tetrominoes { tetrominoes: vec![I(), J(), L(), O(), S(), T(), Z()] }
+    }
+    
+    pub fn get(&self, name: &str) -> Option<&Tetromino> {
+        self.tetrominoes.iter().find(|t| t.name == name)
+    }
 }
