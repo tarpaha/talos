@@ -1,4 +1,8 @@
+extern crate clap;
+
 use std::fmt;
+use clap::{Arg, App};
+
 mod tetris;
 
 struct Field {
@@ -92,10 +96,34 @@ fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) {
     println!("Solved in {} operations", field.operations);
 }
 
+fn parse_args() -> (u8, u8, String) {
+    let matches = App::new(env!("CARGO_PKG_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .arg(Arg::with_name("width")
+            .help("Field width")
+            .required(true)
+            .index(1))
+        .arg(Arg::with_name("height")
+            .help("Field height")
+            .required(true)
+            .index(2))
+        .arg(Arg::with_name("tetrominoes")
+            .help("String of tetrominoes")
+            .required(true)
+            .index(3))
+        .after_help("Usage example: \"talos 4 4 L1J1O1I1\"")
+        .get_matches();
+
+    (
+        matches.value_of("width").unwrap().parse().unwrap(),
+        matches.value_of("height").unwrap().parse().unwrap(),
+        matches.value_of("tetrominoes").unwrap().to_string()
+    )
+}
+
 fn main() {
-    //solve(4, 4, "L1J1O1I1");
-    //solve(4, 6, "I1O1T2L1Z1");
-    //solve(6, 6, "O1S4L4");
-    //solve(6, 8, "O2T4J1L1S2Z2");
-    solve(5, 8, "Z2S1T2I2L2O1");
+    let (width, height, tetrominoes) = parse_args();
+    solve(width, height, &tetrominoes);
 }
