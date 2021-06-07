@@ -88,12 +88,11 @@ fn solve_impl(field: &mut Field, mut tetrominoes: Vec<&tetris::Tetromino>) {
     }
 }
 
-fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) {
+fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Field {
     let mut field = Field::new(field_width, field_height);
     let tetrominoes = tetris::Tetrominoes::new();
     solve_impl(&mut field, tetrominoes.collection_from_string(tetrominoes_string));
-    println!("{}", field);
-    println!("Solved in {} operations", field.operations);
+    field
 }
 
 fn parse_args() -> (u8, u8, String) {
@@ -115,7 +114,6 @@ fn parse_args() -> (u8, u8, String) {
             .index(3))
         .after_help("Usage example: \"talos 4 4 L1J1O1I1\"")
         .get_matches();
-
     (
         matches.value_of("width").unwrap().parse().unwrap(),
         matches.value_of("height").unwrap().parse().unwrap(),
@@ -125,5 +123,7 @@ fn parse_args() -> (u8, u8, String) {
 
 fn main() {
     let (width, height, tetrominoes) = parse_args();
-    solve(width, height, &tetrominoes);
+    let field = solve(width, height, &tetrominoes);
+    println!("{}", field);
+    println!("Solved in {} operations", field.operations);
 }
