@@ -129,8 +129,11 @@ fn main() {
     let field = solve(width, height, &tetrominoes);
     let elapsed_millis = now.elapsed().as_millis();
     println!("{}", field);
-    println!("Solved in {} ms, {} operations, {} op/sec",
-             elapsed_millis,
-             field.operations,
-             field.operations as u128 * 1000 / elapsed_millis);
+    print!("Solved in {} ms, {} operations", elapsed_millis, field.operations);
+    if elapsed_millis > 0 {
+        println!(", {} op/sec", field.operations as u128 * 1000 / elapsed_millis);
+    }
+    else {
+        println!();
+    }
 }
