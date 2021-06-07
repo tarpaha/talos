@@ -62,7 +62,7 @@ impl Tetromino {
 
 impl fmt::Display for Tetromino {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "\"{}\"", self.name);
+        writeln!(f, "\"{}\"", self.name)?;
         for variant in &self.variants {
             write!(f, "{}", variant)?;
         }
