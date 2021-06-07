@@ -3,6 +3,7 @@ name = "talos"
 version = "0.1.0"
 description = "Solves \"The Talos Principle\" game puzzles"
 authors = ["tarpaha <ppopchikovsky@gmail.com>"]
+repository = "https://github.com/tarpaha/talos.git"
 edition = "2018"
 
 [dependencies]

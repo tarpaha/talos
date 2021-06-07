@@ -112,7 +112,8 @@ fn parse_args() -> (u8, u8, String) {
             .help("String of tetrominoes")
             .required(true)
             .index(3))
-        .after_help("Usage example: \"talos 4 4 L1J1O1I1\"")
+        .after_help(format!("Usage example: \"talos 4 4 L1J1O1I1\"\n\
+                             Repository: {}", env!("CARGO_PKG_REPOSITORY")).as_str())
         .get_matches();
     (
         matches.value_of("width").unwrap().parse().unwrap(),
