@@ -1,6 +1,7 @@
 extern crate clap;
 
 use std::fmt;
+use std::time::Instant;
 use clap::{Arg, App};
 
 mod tetris;
@@ -124,7 +125,12 @@ fn parse_args() -> (u8, u8, String) {
 
 fn main() {
     let (width, height, tetrominoes) = parse_args();
+    let now = Instant::now();
     let field = solve(width, height, &tetrominoes);
+    let elapsed_millis = now.elapsed().as_millis();
     println!("{}", field);
-    println!("Solved in {} operations", field.operations);
+    println!("Solved in {} ms, {} operations, {} op/sec",
+             elapsed_millis,
+             field.operations,
+             field.operations as u128 * 1000 / elapsed_millis);
 }
