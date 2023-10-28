@@ -1,5 +1,3 @@
-extern crate clap;
-
 use std::fmt;
 use std::time::Instant;
 use clap::{Arg, App};
