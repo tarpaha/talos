@@ -50,13 +50,13 @@ impl fmt::Display for TetrominoVariant {
 //////////////////////////////////////////////////////////////////////////////
 
 pub struct Tetromino {
-    name: &'static str,
+    name: String,
     pub variants: Vec<TetrominoVariant>
 }
 
 impl Tetromino {
-    fn from_variants(name: &'static str, variants: Vec<TetrominoVariant>) -> Self {
-        Tetromino { name, variants }
+    fn from_variants(name: &str, variants: Vec<TetrominoVariant>) -> Self {
+        Tetromino { name: name.to_string(), variants }
     }
 }
 
