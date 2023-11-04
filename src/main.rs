@@ -5,6 +5,7 @@ mod args;
 mod tetris;
 
 use args::parse_args;
+use tetris::{TetrominoVariant, Tetromino, Tetrominoes};
 
 struct Field {
     width: u8,
@@ -20,20 +21,20 @@ impl Field {
         Field { width, height, cells: vec![0; (width * height) as usize], current: 1, filled: 0, operations: 0 }
     }
     
-    fn add(&mut self, tetromino_variant: &tetris::TetrominoVariant, x: u8, y: u8) {
+    fn add(&mut self, tetromino_variant: &TetrominoVariant, x: u8, y: u8) {
         self.apply_tetromino_with_value(tetromino_variant, x, y, self.current);
         self.current += 1;
         self.filled += 4;
         self.operations += 1;
     }
 
-    fn remove(&mut self, tetromino_variant: &tetris::TetrominoVariant, x: u8, y: u8) {
+    fn remove(&mut self, tetromino_variant: &TetrominoVariant, x: u8, y: u8) {
         self.apply_tetromino_with_value(tetromino_variant, x, y, 0);
         self.current -= 1;
         self.filled -= 4;
     }
     
-    fn apply_tetromino_with_value(&mut self, tetromino_variant: &tetris::TetrominoVariant, x: u8, y: u8, value: u8) {
+    fn apply_tetromino_with_value(&mut self, tetromino_variant: &TetrominoVariant, x: u8, y: u8, value: u8) {
         for block in &tetromino_variant.blocks {
             let p = (x + block.x) + self.width * (y + block.y);
             self.cells[p as usize] = value;
@@ -60,7 +61,7 @@ impl fmt::Display for Field {
     }
 }
 
-fn can_be_placed(field: &Field, tetromino_variant: &tetris::TetrominoVariant, x: u8, y: u8) -> bool {
+fn can_be_placed(field: &Field, tetromino_variant: &TetrominoVariant, x: u8, y: u8) -> bool {
     for block in &tetromino_variant.blocks {
         let p = (x + block.x) + field.width * (y + block.y);
         if field.cells[p as usize] > 0 {
@@ -70,7 +71,7 @@ fn can_be_placed(field: &Field, tetromino_variant: &tetris::TetrominoVariant, x:
     true
 }
 
-fn solve_impl(field: &mut Field, mut tetrominoes: Vec<&tetris::Tetromino>) {
+fn solve_impl(field: &mut Field, mut tetrominoes: Vec<&Tetromino>) {
     while let Some(tetromino) = tetrominoes.pop() {
         for variant in &tetromino.variants {
             for y in 0..(field.height - variant.height + 1) {
@@ -91,7 +92,7 @@ fn solve_impl(field: &mut Field, mut tetrominoes: Vec<&tetris::Tetromino>) {
 
 fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Field {
     let mut field = Field::new(field_width, field_height);
-    let tetrominoes = tetris::Tetrominoes::new();
+    let tetrominoes = Tetrominoes::new();
     solve_impl(&mut field, tetrominoes.collection_from_string(tetrominoes_string));
     field
 }
