@@ -42,7 +42,7 @@ impl Field {
     }
     
     fn is_full(&self) -> bool {
-        self.filled == self.width * self.height 
+        self.filled == self.cells.len() as u8
     }
 }
 
