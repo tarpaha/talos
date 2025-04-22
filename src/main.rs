@@ -71,29 +71,32 @@ fn can_be_placed(field: &Field, tetromino_variant: &TetrominoVariant, x: u8, y: 
     true
 }
 
-fn solve_impl(field: &mut Field, mut tetrominoes: Vec<&Tetromino>) {
-    while let Some(tetromino) = tetrominoes.pop() {
-        for variant in &tetromino.variants {
-            for y in 0..(field.height - variant.height + 1) {
-                for x in 0..(field.width - variant.width + 1) {
-                    if can_be_placed(&field, variant, x, y) {
-                        field.add(variant, x, y);
-                        solve_impl(field, tetrominoes.clone());
-                        if field.is_full() {
-                            return;
-                        }
-                        field.remove(variant, x, y);
+fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) {
+    if index >= tetrominoes.len() {
+        return;
+    }
+    let tetromino = tetrominoes[index];
+    for variant in &tetromino.variants {
+        for y in 0..(field.height - variant.height + 1) {
+            for x in 0..(field.width - variant.width + 1) {
+                if can_be_placed(&field, variant, x, y) {
+                    field.add(variant, x, y);
+                    solve_impl(field, tetrominoes, index + 1);
+                    if field.is_full() {
+                        return;
                     }
+                    field.remove(variant, x, y);
                 }
             }
         }
     }
 }
 
+
 fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Field {
     let mut field = Field::new(field_width, field_height);
     let tetrominoes = Tetrominoes::new();
-    solve_impl(&mut field, tetrominoes.collection_from_string(tetrominoes_string));
+    solve_impl(&mut field, &tetrominoes.collection_from_string(tetrominoes_string), 0);
     field
 }
 
