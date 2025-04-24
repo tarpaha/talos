@@ -1,4 +1,5 @@
 use std::fmt;
+use std::error::Error;
 use std::time::Instant;
 
 mod args;
@@ -93,17 +94,17 @@ fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) {
 }
 
 
-fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Field {
+fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Result<Field, Box<dyn Error>> {
     let mut field = Field::new(field_width, field_height);
     let tetrominoes = Tetrominoes::new();
-    solve_impl(&mut field, &tetrominoes.collection_from_string(tetrominoes_string), 0);
-    field
+    solve_impl(&mut field, &tetrominoes.collection_from_string(tetrominoes_string)?, 0);
+    Ok(field)
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>>{
     let (width, height, tetrominoes) = parse_args();
     let now = Instant::now();
-    let field = solve(width, height, &tetrominoes);
+    let field = solve(width, height, &tetrominoes)?;
     let elapsed_millis = now.elapsed().as_millis();
     println!("{}", field);
     print!("Solved in {} ms, {} operations", elapsed_millis, field.operations);
@@ -113,4 +114,5 @@ fn main() {
     else {
         println!();
     }
+    Ok(())
 }

@@ -1,5 +1,6 @@
 ﻿use std::fmt;
 use std::str;
+use std::error::Error;
 
 pub struct Block {
     pub x: u8,
@@ -203,6 +204,23 @@ fn Z() -> Tetromino {
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+#[derive(Debug)]
+pub enum TetrominoError {
+    InvalidTetromino(char),
+    InvalidCount(char),
+}
+
+impl fmt::Display for TetrominoError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TetrominoError::InvalidTetromino(c) => write!(f, "Invalid tetromino character: {}", c),
+            TetrominoError::InvalidCount(c) => write!(f, "Invalid count character: {}", c),
+        }
+    }
+}
+
+impl Error for TetrominoError {}
+
 pub struct Tetrominoes {
     tetrominoes: Vec<Tetromino>
 }
@@ -216,16 +234,18 @@ impl Tetrominoes {
         self.tetrominoes.iter().find(|t| t.name == name)
     }
     
-    pub fn collection_from_string(&self, s: &str) -> Vec<&Tetromino> {
+    pub fn collection_from_string(&self, s: &str) -> Result<Vec<&Tetromino>, Box<dyn Error>> {
         let mut tetrominoes = vec![];
         let chars: Vec<char> = s.chars().collect();
         for i in (0..chars.len()).step_by(2) {
-            let tetromino = self.get(&chars[i].to_string()).unwrap();
-            let count = char::to_digit(chars[i +1], 10).unwrap();
+            let tetromino = self.get(&chars[i].to_string())
+                .ok_or(TetrominoError::InvalidTetromino(chars[i]))?;
+            let count = char::to_digit(chars[i + 1], 10)
+                .ok_or(TetrominoError::InvalidCount(chars[i + 1]))?;
             for _ in 0..count {
                 tetrominoes.push(tetromino);
             }
         }
-        tetrominoes
+        Ok(tetrominoes)
     }
 }
