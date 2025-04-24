@@ -72,9 +72,9 @@ fn can_be_placed(field: &Field, tetromino_variant: &TetrominoVariant, x: u8, y: 
     true
 }
 
-fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) {
+fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) -> bool{
     if index >= tetrominoes.len() {
-        return;
+        return field.is_full();
     }
     let tetromino = tetrominoes[index];
     for variant in &tetromino.variants {
@@ -84,35 +84,39 @@ fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) {
                     field.add(variant, x, y);
                     solve_impl(field, tetrominoes, index + 1);
                     if field.is_full() {
-                        return;
+                        return true;
                     }
                     field.remove(variant, x, y);
                 }
             }
         }
     }
+    false
 }
 
 
-fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Result<Field, Box<dyn Error>> {
+fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Result<Option<Field>, Box<dyn Error>> {
     let mut field = Field::new(field_width, field_height);
     let tetrominoes = Tetrominoes::new();
-    solve_impl(&mut field, &tetrominoes.collection_from_string(tetrominoes_string)?, 0);
-    Ok(field)
+    let solved = solve_impl(&mut field, &tetrominoes.collection_from_string(tetrominoes_string)?, 0);
+    Ok(if solved { Some(field) } else { None })
 }
 
 fn main() -> Result<(), Box<dyn Error>>{
     let (width, height, tetrominoes) = parse_args();
     let now = Instant::now();
-    let field = solve(width, height, &tetrominoes)?;
-    let elapsed_millis = now.elapsed().as_millis();
-    println!("{}", field);
-    print!("Solved in {} ms, {} operations", elapsed_millis, field.operations);
-    if elapsed_millis > 0 {
-        println!(", {} op/sec", field.operations as u128 * 1000 / elapsed_millis);
-    }
-    else {
-        println!();
+    match solve(width, height, &tetrominoes)? {
+        Some(field) => {
+            let elapsed_millis = now.elapsed().as_millis();
+            println!("{}", field);
+            print!("Solved in {} ms, {} operations", elapsed_millis, field.operations);
+            if elapsed_millis > 0 {
+                println!(", {} op/sec", field.operations as u128 * 1000 / elapsed_millis);
+            } else {
+                println!();
+            }
+        }
+        None => println!("No solution found")
     }
     Ok(())
 }
