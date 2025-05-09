@@ -4,6 +4,7 @@ use std::time::Instant;
 
 mod args;
 mod tetris;
+mod regions;
 
 use args::parse_args;
 use tetris::{TetrominoVariant, Tetromino, Tetrominoes};
