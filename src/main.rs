@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fmt;
 use std::error::Error;
 use std::time::Instant;
@@ -13,6 +14,7 @@ struct Field {
     width: u8,
     height: u8,
     cells: Vec<u8>,
+    free: HashSet<(i32, i32)>,
     filled: u8,
     current: u8,
     operations: u64
@@ -20,7 +22,13 @@ struct Field {
 
 impl Field {
     fn new(width: u8, height: u8) -> Self {
-        Field { width, height, cells: vec![0; (width * height) as usize], current: 1, filled: 0, operations: 0 }
+        let mut free = HashSet::new();
+        for y in 0..height {
+            for x in 0..width {
+                free.insert((x as i32, y as i32));
+            }
+        }
+        Field { width, height, cells: vec![0; (width * height) as usize], free, current: 1, filled: 0, operations: 0 }
     }
     
     fn add(&mut self, tetromino_variant: &TetrominoVariant, x: u8, y: u8) {
@@ -40,6 +48,11 @@ impl Field {
         for block in &tetromino_variant.blocks {
             let p = (x + block.x) + self.width * (y + block.y);
             self.cells[p as usize] = value;
+            if value > 0 {
+                self.free.remove(&((x + block.x) as i32, (y + block.y) as i32));
+            } else {
+                self.free.insert(((x + block.x) as i32, (y + block.y) as i32));
+            }
         }
     }
     
@@ -73,6 +86,16 @@ fn can_be_placed(field: &Field, tetromino_variant: &TetrominoVariant, x: u8, y: 
     true
 }
 
+fn have_enough_space(field: &Field) -> bool {
+    let regions = regions::find_connected_region_sizes(field.width as i32, field.height as i32, &field.free);
+    for size in regions {
+        if size % 4 != 0 {
+            return false;
+        }
+    }
+    true
+}
+
 fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) -> bool{
     if index >= tetrominoes.len() {
         return field.is_full();
@@ -83,6 +106,10 @@ fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) -> bo
             for x in 0..(field.width - variant.width + 1) {
                 if can_be_placed(&field, variant, x, y) {
                     field.add(variant, x, y);
+                    if !have_enough_space(&field) {
+                        field.remove(variant, x, y);
+                        continue;
+                    }
                     solve_impl(field, tetrominoes, index + 1);
                     if field.is_full() {
                         return true;
