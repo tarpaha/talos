@@ -87,13 +87,11 @@ fn can_be_placed(field: &Field, tetromino_variant: &TetrominoVariant, x: u8, y: 
 }
 
 fn have_enough_space(field: &Field) -> bool {
-    let regions = regions::find_connected_region_sizes(field.width as i32, field.height as i32, &field.free);
-    for size in regions {
-        if size % 4 != 0 {
-            return false;
-        }
-    }
-    true
+    let regions = regions::find_connected_region_sizes(
+        field.width as i32,
+        field.height as i32,
+        &field.free);
+    regions.iter().all(|&size| size % 4 == 0)
 }
 
 fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) -> bool{
