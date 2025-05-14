@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::fmt;
 use std::error::Error;
 use std::time::Instant;
+use rand::seq::SliceRandom;
 
 mod args;
 mod tetris;
@@ -10,6 +11,7 @@ mod regions;
 use args::parse_args;
 use tetris::{TetrominoVariant, Tetromino, Tetrominoes};
 
+#[derive(Clone)]
 struct Field {
     width: u8,
     height: u8,
@@ -122,10 +124,16 @@ fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) -> bo
 
 
 fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Result<Option<Field>, Box<dyn Error>> {
-    let mut field = Field::new(field_width, field_height);
+    let field = Field::new(field_width, field_height);
     let tetrominoes = Tetrominoes::new();
-    let solved = solve_impl(&mut field, &tetrominoes.collection_from_string(tetrominoes_string)?, 0);
-    Ok(if solved { Some(field) } else { None })
+    let tetrominoes = tetrominoes.collection_from_string(tetrominoes_string)?;
+    {
+        let mut field = field.clone();
+        let mut tetrominoes = tetrominoes.clone();
+        tetrominoes.shuffle(&mut rand::rng());
+        let solved = solve_impl(&mut field, &tetrominoes, 0);
+        Ok(if solved { Some(field) } else { None })
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>>{
