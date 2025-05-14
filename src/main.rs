@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 use std::fmt;
 use std::error::Error;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 use rand::seq::SliceRandom;
 
@@ -96,24 +98,51 @@ fn have_enough_space(field: &Field) -> bool {
     regions.iter().all(|&size| size % 4 == 0)
 }
 
-fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize) -> bool{
-    if index >= tetrominoes.len() {
-        return field.is_full();
+fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize, done: &Arc<AtomicBool>) -> bool{
+    if done.load(Ordering::Relaxed) {
+        return false;
     }
     let tetromino = tetrominoes[index];
     for variant in &tetromino.variants {
         for y in 0..(field.height - variant.height + 1) {
             for x in 0..(field.width - variant.width + 1) {
+                if done.load(Ordering::Relaxed) {
+                    return false;
+                }
+                // if tetromino do not intersect with already placed tetrominoes
                 if can_be_placed(&field, variant, x, y) {
+                    // then place it
                     field.add(variant, x, y);
+                    // check is field is fully filled
+                    if field.is_full() {
+                        // solution found, try to set a completion flag
+                        if done
+                            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+                            .is_ok()
+                        {
+                            // it was successful, then it means that this is the first solution
+                            return true;
+                        }
+                        else
+                        {
+                            // a solution was already found, stop here
+                            return false;
+                        }
+                    }
+                    // check if there is enough space to place the next tetromino
                     if !have_enough_space(&field) {
+                        // no space, remove the last placed tetromino
                         field.remove(variant, x, y);
+                        // and continue for the next coordinate
                         continue;
                     }
-                    solve_impl(field, tetrominoes, index + 1);
-                    if field.is_full() {
+                    // field is not complete and have place for next tetromino,
+                    // try to place it recursively
+                    if solve_impl(field, tetrominoes, index + 1, done) {
                         return true;
                     }
+                    // have no solution for current (x, y),
+                    // continue for the next coordinate
                     field.remove(variant, x, y);
                 }
             }
@@ -127,11 +156,12 @@ fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Result<
     let field = Field::new(field_width, field_height);
     let tetrominoes = Tetrominoes::new();
     let tetrominoes = tetrominoes.collection_from_string(tetrominoes_string)?;
+    let done = Arc::new(AtomicBool::new(false));
     {
         let mut field = field.clone();
         let mut tetrominoes = tetrominoes.clone();
         tetrominoes.shuffle(&mut rand::rng());
-        let solved = solve_impl(&mut field, &tetrominoes, 0);
+        let solved = solve_impl(&mut field, &tetrominoes, 0, &done.clone());
         Ok(if solved { Some(field) } else { None })
     }
 }
