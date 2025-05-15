@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 clap = "2.33.3"
 rand = "0.9.1"
+num_cpus = "1.16.0"

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
-use std::fmt;
+use std::{fmt, thread};
 use std::error::Error;
-use std::sync::Arc;
+use std::sync::{mpsc, Arc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 use rand::seq::SliceRandom;
@@ -90,6 +90,8 @@ fn can_be_placed(field: &Field, tetromino_variant: &TetrominoVariant, x: u8, y: 
     true
 }
 
+// check if there is enough space to place tetrominoes,
+// that means that there are no free regions with size that is not divisible by 4
 fn have_enough_space(field: &Field) -> bool {
     let regions = regions::find_connected_region_sizes(
         field.width as i32,
@@ -98,8 +100,17 @@ fn have_enough_space(field: &Field) -> bool {
     regions.iter().all(|&size| size % 4 == 0)
 }
 
-fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize, done: &Arc<AtomicBool>) -> bool{
+fn solve_impl(
+    field: &mut Field,
+    tetrominoes: &[&Tetromino],
+    index: usize,
+    done: &AtomicBool,
+    tx: &mpsc::Sender<(String, u64)>
+) -> bool {
     if done.load(Ordering::Relaxed) {
+        return false;
+    }
+    if index >= tetrominoes.len() {
         return false;
     }
     let tetromino = tetrominoes[index];
@@ -121,6 +132,7 @@ fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize, done:
                             .is_ok()
                         {
                             // it was successful, then it means that this is the first solution
+                            tx.send((format!("{}", field), field.operations)).unwrap();
                             return true;
                         }
                         else
@@ -138,7 +150,7 @@ fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize, done:
                     }
                     // field is not complete and have place for next tetromino,
                     // try to place it recursively
-                    if solve_impl(field, tetrominoes, index + 1, done) {
+                    if solve_impl(field, tetrominoes, index + 1, done, tx) {
                         return true;
                     }
                     // have no solution for current (x, y),
@@ -152,30 +164,58 @@ fn solve_impl(field: &mut Field, tetrominoes: &[&Tetromino], index: usize, done:
 }
 
 
-fn solve(field_width: u8, field_height: u8, tetrominoes_string: &str) -> Result<Option<Field>, Box<dyn Error>> {
+fn solve(
+    field_width: u8,
+    field_height: u8,
+    tetrominoes_string: &str,
+    threads_count: usize
+) -> Result<Option<(String, u64)>, Box<dyn Error>> {
     let field = Field::new(field_width, field_height);
     let tetrominoes = Tetrominoes::new();
-    let tetrominoes = tetrominoes.collection_from_string(tetrominoes_string)?;
+    let tetrominoes: Vec<&Tetromino> = tetrominoes.collection_from_string(tetrominoes_string)?;
+
+    let (tx, rx) = mpsc::channel();
     let done = Arc::new(AtomicBool::new(false));
-    {
-        let mut field = field.clone();
-        let mut tetrominoes = tetrominoes.clone();
-        tetrominoes.shuffle(&mut rand::rng());
-        let solved = solve_impl(&mut field, &tetrominoes, 0, &done.clone());
-        Ok(if solved { Some(field) } else { None })
-    }
+
+    // scope required to be sure that no one thread will outlive this function
+    let result = thread::scope(|scope| {
+        for _ in 0..threads_count {
+            let mut field = field.clone();
+            
+            let mut tetrominoes = tetrominoes.clone();
+            tetrominoes.shuffle(&mut rand::rng());
+
+            let done = done.clone();
+            let tx = tx.clone();
+
+            scope.spawn(move || {
+                solve_impl(&mut field, &tetrominoes, 0, &done, &tx)
+            });
+        }
+        // tx was cloned in each thread, drop it here
+        drop(tx);
+
+        // rx.recv() can finish with two values:
+        // Ok - solution was found by one of the threads, and it was sent to the channel
+        // Err - no solution was found, all threads were ended, and so all tx were dropped
+        rx.recv()
+    });
+
+    Ok(result.ok())
 }
 
 fn main() -> Result<(), Box<dyn Error>>{
     let (width, height, tetrominoes) = parse_args();
+    let num_cpus = num_cpus::get();
+    println!("Solving {}x{} field with {} threads", width, height, num_cpus);
     let now = Instant::now();
-    match solve(width, height, &tetrominoes)? {
-        Some(field) => {
+    match solve(width, height, &tetrominoes, num_cpus)? {
+        Some((solution, operations)) => {
             let elapsed_millis = now.elapsed().as_millis();
-            println!("{}", field);
-            print!("Solved in {} ms, {} operations", elapsed_millis, field.operations);
+            print!("{}", solution);
+            print!("Solved in {} ms, {} operations", elapsed_millis, operations);
             if elapsed_millis > 0 {
-                println!(", {} op/sec", field.operations as u128 * 1000 / elapsed_millis);
+                println!(", {} op/sec", operations as u128 * 1000 / elapsed_millis);
             } else {
                 println!();
             }

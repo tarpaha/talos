@@ -1,48 +1,5 @@
 use std::collections::{HashSet, VecDeque};
 
-/// Finds and calculates the sizes of all connected regions of free cells within a grid.
-///
-/// # Parameters
-/// - `width`: The width of the grid (number of columns).
-/// - `height`: The height of the grid (number of rows).
-/// - `free_cells`: A `HashSet` containing the coordinates of the free cells within the grid.
-///   Each coordinate is represented as a tuple `(x, y)`, where `0 <= x < width` and
-///   `0 <= y < height`.
-///
-/// # Returns
-/// A `Vec<usize>` where each element represents the size of a connected region of free cells. 
-/// A region is defined as a set of free cells that are connected horizontally or vertically.
-///
-/// # Algorithm
-/// - The function uses a breadth-first search (BFS) algorithm to traverse the grid.
-/// - It iterates over all free cells provided in the `free_cells` set.
-/// - For each free cell that has not been visited yet, a BFS is initiated to explore
-///   all connected cells, marking them as visited and calculating the size of the
-///   connected region.
-/// - The function ensures that only cells within the grid boundaries and present in the
-///   `free_cells` set are considered during exploration.
-///
-/// # Constraints
-/// - Assumes that the grid dimensions (`width` and `height`) are non-negative integers.
-/// - Assumes that the `free_cells` set contains valid grid coordinates within `0 <= x < width`
-///   and `0 <= y < height`.
-///
-/// # Complexity
-/// - Time Complexity: O(N), where N is the number of free cells in the grid, as each cell
-///   is visited exactly once.
-/// - Space Complexity: O(N), for the `visited` set and BFS queue.
-///
-/// # Example
-/// ```rust
-/// use std::collections::HashSet;
-///
-/// let width = 5;
-/// let height = 5;
-/// let free_cells: HashSet<(i32, i32)> =
-///     [(0, 0), (0, 1), (1, 1), (3, 3), (4, 3), (4, 4)].iter().cloned().collect();
-/// let region_sizes = find_connected_region_sizes(width, height, &free_cells);
-/// assert_eq!(region_sizes, vec![3, 3]); // Two regions: size 3 and size 3
-/// ```
 pub fn find_connected_region_sizes(width: i32, height: i32, free_cells: &HashSet<(i32, i32)>) -> Vec<usize> {
     let mut spaces = Vec::with_capacity(free_cells.len());
     let mut visited = HashSet::with_capacity(free_cells.len());
